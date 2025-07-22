@@ -1,17 +1,25 @@
-# server.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import requests
 from bs4 import BeautifulSoup
 import re
 from urllib.parse import urljoin
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='.')
+
+@app.route('/')
+@app.route('/index.html')
+def serve_index():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/favicon.ico')
+def serve_favicon():
+    return send_from_directory('.', 'favicon.ico', mimetype='image/x-icon')
 
 # Функція для збору даних із соціальних мереж
 def scrape_social_media(query):
     results = []
     try:
-        # Приклад пошуку в Google (Google Dorks)
         google_url = f"https://www.google.com/search?q={query}+site:*.twitter.com | site:*.linkedin.com | site:*.facebook.com"
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         response = requests.get(google_url, headers=headers, timeout=10)
@@ -58,9 +66,8 @@ def osint_search():
     query = data.get('query', '')
     results = []
     
-    # Збір даних із різних джерел
     results.extend(scrape_social_media(query))
-    if '.' in query:  # Перевірка, чи це домен
+    if '.' in query:
         results.extend(check_whois(query))
     results.extend(find_emails(query))
     results.extend(geolocation_search(query))

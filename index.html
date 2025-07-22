@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/babel-standalone@7.18.9/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
   <div id="root"></div>
@@ -19,19 +20,23 @@
       const [query, setQuery] = useState('');
       const [results, setResults] = useState([]);
       const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
 
       const searchOSINT = async () => {
         setLoading(true);
+        setError(null);
         try {
-          const response = await fetch('http://localhost:5000/api/osint', {
+          const response = await fetch('/api/osint', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query })
           });
+          if (!response.ok) throw new Error('Помилка сервера');
           const data = await response.json();
           setResults(data);
         } catch (error) {
-          console.error('Помилка:', error);
+          setError(error.message);
+          setResults([]);
         }
         setLoading(false);
       };
@@ -55,11 +60,12 @@
             </button>
           </div>
           {loading && <p className="text-center mt-4">Завантаження...</p>}
+          {error && <p className="text-center mt-4 text-red-500">{error}</p>}
           <div className="mt-6 max-w-4xl mx-auto">
             {results.map((result, index) => (
               <div key={index} className="bg-white p-4 mb-4 rounded shadow">
                 <p><strong>Джерело:</strong> {result.source}</p>
-                <p><strong>Дані:</strong> {result.data}</p>
+                <p><strong>Дані:</strong> {JSON.stringify(result.data)}</p>
               </div>
             ))}
           </div>
