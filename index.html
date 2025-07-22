@@ -1,0 +1,73 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSINT веб-додаток</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@7.18.9/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const App = () => {
+      const [query, setQuery] = useState('');
+      const [results, setResults] = useState([]);
+      const [loading, setLoading] = useState(false);
+
+      const searchOSINT = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch('http://localhost:5000/api/osint', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+          });
+          const data = await response.json();
+          setResults(data);
+        } catch (error) {
+          console.error('Помилка:', error);
+        }
+        setLoading(false);
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-100 p-4">
+          <h1 className="text-3xl font-bold text-center mb-6">OSINT веб-додаток</h1>
+          <div className="max-w-md mx-auto">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Введіть запит (нік, email, домен тощо)"
+              className="w-full p-2 mb-4 border rounded"
+            />
+            <button
+              onClick={searchOSINT}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            >
+              Пошук
+            </button>
+          </div>
+          {loading && <p className="text-center mt-4">Завантаження...</p>}
+          <div className="mt-6 max-w-4xl mx-auto">
+            {results.map((result, index) => (
+              <div key={index} className="bg-white p-4 mb-4 rounded shadow">
+                <p><strong>Джерело:</strong> {result.source}</p>
+                <p><strong>Дані:</strong> {result.data}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
