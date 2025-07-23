@@ -1,0 +1,50 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSINT веб-додаток</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div class="min-h-screen bg-gray-100 p-4">
+    <h1 class="text-3xl font-bold text-center mb-6">OSINT веб-додаток</h1>
+    <div class="max-w-md mx-auto">
+      <input id="query" type="text" placeholder="Введіть запит (нік, email, домен тощо)" class="w-full p-2 mb-4 border rounded">
+      <button onclick="searchOSINT()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Пошук</button>
+    </div>
+    <div id="results" class="mt-6 max-w-4xl mx-auto"></div>
+    <div id="error" class="mt-4 text-center text-red-500"></div>
+  </div>
+
+  <script>
+    async function searchOSINT() {
+      const query = document.getElementById('query').value;
+      const resultsDiv = document.getElementById('results');
+      const errorDiv = document.getElementById('error');
+      resultsDiv.innerHTML = 'Завантаження...';
+      errorDiv.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/osint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        if (!response.ok) throw new Error(`Помилка сервера: ${response.status}`);
+        const data = await response.json();
+        resultsDiv.innerHTML = data.map(result => `
+          <div class="bg-white p-4 mb-4 rounded shadow">
+            <p><strong>Джерело:</strong> ${result.source}</p>
+            <p><strong>Дані:</strong> ${JSON.stringify(result.data)}</p>
+          </div>
+        `).join('');
+      } catch (error) {
+        errorDiv.innerHTML = `Помилка: ${error.message}`;
+        resultsDiv.innerHTML = '';
+      }
+    }
+  </script>
+</body>
+</html>
